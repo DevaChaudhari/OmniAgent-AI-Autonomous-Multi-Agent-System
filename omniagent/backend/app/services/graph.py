@@ -5,16 +5,13 @@ from app.agents.planner import planner_agent
 from app.agents.execution_agent import execution_agent
 from app.agents.tool_agent import tool_agent
 
-
-# ✅ Strong typed state
 class AgentState(TypedDict, total=False):
     input: str
     plan: str
     result: str
     tool_result: str
-
-
-# 🧠 Planner Node
+    
+# Planner Node
 def planner_node(state: AgentState):
     user_input = state.get("input", "")
 
@@ -29,7 +26,7 @@ def planner_node(state: AgentState):
     }
 
 
-# ⚙️ Execution Node
+#  Execution Node
 def execution_node(state: AgentState):
     task = state.get("input", "")
 
@@ -44,7 +41,7 @@ def execution_node(state: AgentState):
     }
 
 
-# 🛠 Tool Node
+# Tool Node
 def tool_node(state: AgentState):
     user_input = state.get("input", "")
     result = state.get("result", "")
@@ -52,16 +49,16 @@ def tool_node(state: AgentState):
     print("\n[Tool Agent Running]")
     print("[User Input]:", user_input)
 
-    # ✅ Ensure outputs folder exists
+    # Ensure outputs folder exists
     import os
     os.makedirs("outputs", exist_ok=True)
 
-    # ✅ Save result (logging + persistence)
+    # Save result (logging + persistence)
     file_path = "outputs/output.txt"
     with open(file_path, "w", encoding="utf-8") as f:
         f.write(result)
 
-    # ✅ Tool decision (intent + context)
+    # Tool decision (intent + context)
     tool_result = tool_agent(user_input + "\n" + result)
 
     print("[Tool Output]:", tool_result)
@@ -71,8 +68,7 @@ def tool_node(state: AgentState):
         "tool_result": f"Saved to {file_path}\n{tool_result}"
     }
 
-
-# 🚀 Build Graph
+# Build Graph
 def build_graph():
     graph = StateGraph(AgentState)
 
@@ -82,7 +78,7 @@ def build_graph():
 
     graph.set_entry_point("planner")
 
-    # 🔥 Clean flow
+    # Clean flow
     graph.add_edge("planner", "execute")
     graph.add_edge("execute", "tool")
 

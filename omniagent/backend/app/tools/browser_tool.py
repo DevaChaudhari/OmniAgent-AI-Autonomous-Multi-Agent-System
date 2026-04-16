@@ -10,4 +10,4 @@ def browse_website(url):
 
         browser.close()
 
-    return content[:1000]  # limit output
+    return content[:1000]

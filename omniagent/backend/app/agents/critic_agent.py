@@ -32,7 +32,7 @@ def critic_agent(result, task):
 
     print("\n[Critic Raw Response]:", response)
 
-    # ✅ SAFE JSON PARSING (VERY IMPORTANT)
+    # JSON PARSING
     try:
         match = re.search(r'\{.*\}', response, re.DOTALL)
         if match:
@@ -40,5 +40,5 @@ def critic_agent(result, task):
     except Exception as e:
         print("[Critic Parse Error]:", e)
 
-    # ✅ fallback (safe)
+    # fallback 
     return {"status": "APPROVED"}

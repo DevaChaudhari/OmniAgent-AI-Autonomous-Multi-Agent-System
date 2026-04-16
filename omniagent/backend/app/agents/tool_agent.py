@@ -11,7 +11,7 @@ import re
 def tool_agent(task):
     print("\n[Tool Agent Decision Phase]")
 
-    # 🧠 Ask AI for tools
+    # Ask AI for tools
     prompt = f"""
     You are an AI agent.
 
@@ -30,7 +30,7 @@ def tool_agent(task):
     decision = generate_response(prompt)
     print("[Raw Decision]:", decision)
 
-    # ✅ SAFE PARSE
+    # PARSE
     try:
         match = re.search(r'\{.*\}', decision, re.DOTALL)
         if match:
@@ -42,7 +42,6 @@ def tool_agent(task):
 
     print("[Initial Tools]:", tools)
 
-    # 🔥 FORCE missing tools (VERY IMPORTANT)
     task_lower = task.lower()
 
     if "api" in task_lower and "api" not in tools:
@@ -62,29 +61,29 @@ def tool_agent(task):
 
     print("[Final Tools]:", tools)
 
-    # 🚀 EXECUTE TOOLS
+    # EXECUTE TOOLS
     results = []
 
     for tool in tools:
         tool = tool.lower()
 
-        # ✅ GITHUB
+        # GITHUB
         if tool in ["github", "git", "repo", "repository"]:
             res = create_repo("ai-agent-project")
             results.append(res)
 
-        # ✅ FILE
+        # FILE
         elif tool in ["file", "save", "write"]:
             content = generate_response(f"Write content for: {task}")
             write_file("output.txt", content)
             results.append("File: saved")
 
-        # ✅ API
+        # API
         elif tool in ["api", "fetch", "data"]:
             fetch_data("https://api.github.com")
             results.append("API: data fetched")
 
-        # ✅ BROWSER
+        # BROWSER
         elif tool in ["browser", "browse", "web"]:
             browse_website("https://example.com")
             results.append("Browser: content fetched")
@@ -92,7 +91,7 @@ def tool_agent(task):
     if not results:
         return "No tools executed"
 
-    # 🔥 Order priority
+    # Order priority
     order = ["Browser", "API", "File", "Repo"]
 
     # sort results properly

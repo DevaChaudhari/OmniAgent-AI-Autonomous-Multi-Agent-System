@@ -85,7 +85,7 @@ if "generated_project" not in st.session_state:
 
 
 st.set_page_config(
-    page_title="OmniAgent by Devendra Chaudhari",
+    page_title="ProjectPilot AI by Devendra Chaudhari",
     page_icon="OA",
     layout="wide",
 )
@@ -213,7 +213,7 @@ st.markdown(
             <span class="creator-dot"></span>
             Agent made by Devendra Chaudhari
         </div>
-        <h1>OmniAgent Project Builder</h1>
+        <h1>ProjectPilot AI</h1>
         <p>
             A personal AI project-building agent created by Devendra Chaudhari.
             Turn a project idea into a runnable starter app, package it as a zip,

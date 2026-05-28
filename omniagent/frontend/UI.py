@@ -1,16 +1,17 @@
 import html
-import os
+import re
+import sys
 from pathlib import Path
-from urllib.parse import quote
 
-import requests
 import streamlit as st
 
+BACKEND_DIR = Path(__file__).resolve().parents[1] / "backend"
+if str(BACKEND_DIR) not in sys.path:
+    sys.path.insert(0, str(BACKEND_DIR))
 
-backend_host = os.environ.get("BACKEND_HOST", "http://127.0.0.1:8000")
-API_URL = f"{backend_host}/build-project"
-PUSH_URL = f"{backend_host}/push-project"
-DOWNLOAD_URL = f"{backend_host}/download-project"
+from app.schemas.project import ProjectRequest
+from app.services.project_builder import build_project_response
+from app.tools.github_tool import create_repo_and_upload_project
 
 
 def agent_response_text(data):
@@ -43,24 +44,21 @@ def render_result(data):
         if zip_path:
             zip_file = Path(zip_path)
             st.code(zip_path, language="text")
-            try:
-                download_response = requests.get(
-                    f"{DOWNLOAD_URL}/{quote(zip_file.name)}",
-                    timeout=60,
-                )
-            except requests.RequestException as exc:
-                st.warning(f"Could not prepare zip download: {exc}")
-            else:
-                if download_response.status_code == 200:
+            if zip_file.exists():
+                try:
+                    zip_bytes = zip_file.read_bytes()
+                except OSError as exc:
+                    st.warning(f"Could not prepare zip download: {exc}")
+                else:
                     st.download_button(
                         "Download project zip",
-                        data=download_response.content,
+                        data=zip_bytes,
                         file_name=zip_file.name,
                         mime="application/zip",
                         use_container_width=True,
                     )
-                else:
-                    st.warning("Zip file was not found on the backend.")
+            else:
+                st.warning("Zip file was not found in this Streamlit session.")
 
     st.download_button(
         "Download agent response",
@@ -78,6 +76,11 @@ def token_help():
     st.write("If the agent should create a new repo, use all repositories access with the needed repository permissions, or use a classic token.")
     st.write("For a classic token, enable the `repo` scope.")
     st.write("The token is sent only for the push request and is not saved by this app.")
+
+
+def suggest_repo_name(project_name):
+    slug = re.sub(r"[^a-z0-9]+", "-", project_name.lower()).strip("-")
+    return slug or "ai-agent-project"
 
 
 if "generated_project" not in st.session_state:
@@ -273,26 +276,18 @@ with build_tab:
 
         with st.spinner("Generating files, README, and zip package..."):
             try:
-                response = requests.post(
-                    API_URL,
-                    json={
-                        "project_name": project_name.strip(),
-                        "project_description": project_description.strip(),
-                        "tech_stack": tech_stack.strip(),
-                        "push_to_github": False,
-                    },
-                    timeout=180,
+                data = build_project_response(
+                    ProjectRequest(
+                        project_name=project_name.strip(),
+                        project_description=project_description.strip(),
+                        tech_stack=tech_stack.strip(),
+                        push_to_github=False,
+                    )
                 )
-            except requests.RequestException as exc:
-                st.error(f"Could not reach backend: {exc}")
+            except Exception as exc:
+                st.error(f"Project generation failed: {exc}")
                 st.stop()
 
-        if response.status_code != 200:
-            st.error(f"Backend returned error {response.status_code}")
-            st.code(response.text, language="text")
-            st.stop()
-
-        data = response.json()
         st.session_state.generated_project = data | {"project_name": project_name.strip()}
         st.success("Project generated. Open the Push tab when you are ready to upload it.")
 
@@ -341,27 +336,17 @@ with push_tab:
 
         with st.spinner("Creating or updating the GitHub repo..."):
             try:
-                response = requests.post(
-                    PUSH_URL,
-                    json={
-                        "project_name": generated_project.get("project_name", ""),
-                        "project_path": generated_project.get("project_path", ""),
-                        "github_link": github_link.strip(),
-                        "github_token": github_token.strip(),
-                        "repo_name": repo_name.strip(),
-                    },
-                    timeout=180,
+                github_result = create_repo_and_upload_project(
+                    repo_name=repo_name.strip() or suggest_repo_name(generated_project.get("project_name", "")),
+                    github_username=github_link.strip(),
+                    project_path=generated_project.get("project_path", ""),
+                    github_link=github_link.strip(),
+                    github_token=github_token.strip(),
                 )
-            except requests.RequestException as exc:
-                st.error(f"Could not reach backend: {exc}")
+            except Exception as exc:
+                st.error(f"GitHub push failed: {exc}")
                 st.stop()
 
-        if response.status_code != 200:
-            st.error(f"Backend returned error {response.status_code}")
-            st.code(response.text, language="text")
-            st.stop()
-
-        github_result = response.json().get("github", "")
         if github_result.startswith("GitHub Error:"):
             st.error(github_result)
         else:

@@ -1,0 +1,43 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omniagent-backend
+  labels:
+    app: omniagent-backend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omniagent-backend
+  template:
+    metadata:
+      labels:
+        app: omniagent-backend
+    spec:
+      containers:
+        - name: backend
+          image: ghcr.io/devachaudhari/omniagent-backend:latest
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8000
+          env:
+            - name: PYTHONUNBUFFERED
+              value: "1"
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8000
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: artifacts
+              mountPath: /app/artifacts
+      volumes:
+        - name: artifacts
+          emptyDir: {}

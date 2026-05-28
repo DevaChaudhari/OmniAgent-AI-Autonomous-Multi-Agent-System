@@ -1,9 +1,8 @@
 fastapi
 uvicorn
-langchain
 langgraph
-langchain-community
-faiss-cpu
 python-dotenv
-google-generativeai
 pydantic
+PyGithub
+streamlit
+requests

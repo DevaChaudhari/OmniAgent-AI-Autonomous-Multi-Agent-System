@@ -1,0 +1,15 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: omniagent-frontend
+  labels:
+    app: omniagent-frontend
+spec:
+  selector:
+    app: omniagent-frontend
+  ports:
+    - protocol: TCP
+      port: 8501
+      targetPort: 8501
+      nodePort: 30080
+  type: NodePort

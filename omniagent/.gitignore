@@ -2,6 +2,8 @@
 __pycache__/
 *.pyc
 *.pyo
+*.log
+*.err
 
 # Virtual env
 .venv/
@@ -12,6 +14,7 @@ venv/
 
 # Outputs
 outputs/
+backend/artifacts/
 
 # OS files
 .DS_Store

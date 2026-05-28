@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omniagent-frontend
+  labels:
+    app: omniagent-frontend
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: omniagent-frontend
+  template:
+    metadata:
+      labels:
+        app: omniagent-frontend
+    spec:
+      containers:
+        - name: frontend
+          image: ghcr.io/devachaudhari/omniagent-frontend:devendra-branding
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 8501
+          env:
+            - name: BACKEND_HOST
+              value: "http://omniagent-backend:8000"
+          readinessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 10
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /_stcore/health
+              port: 8501
+            initialDelaySeconds: 20
+            periodSeconds: 20
